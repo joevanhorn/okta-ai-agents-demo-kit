@@ -72,6 +72,22 @@ SIM_NUMBER_MAX = 4999
 # ---------------------------------------------------------------------------
 # Minimal ServiceNow client (adapted from bedrock-agent/scripts/seed_demo_data.py)
 # ---------------------------------------------------------------------------
+class InstanceHibernatingError(Exception):
+    """The PDI is asleep and serving its HTML hibernation page instead of JSON."""
+
+
+def _check_awake(resp):
+    # A hibernating PDI answers every API call with an HTML page (HTTP 200),
+    # which previously surfaced as a JSONDecodeError deep in the run. Detect it
+    # up front so callers can skip cleanly instead of crashing.
+    ctype = resp.headers.get("Content-Type", "")
+    if "text/html" in ctype or resp.text.lstrip()[:1] == "<":
+        raise InstanceHibernatingError(
+            "ServiceNow returned an HTML page instead of JSON (instance is "
+            "hibernating). Wake it at developer.servicenow.com and retry."
+        )
+
+
 class ServiceNowClient:
     def __init__(self, instance_url, username, password):
         self.instance_url = instance_url.rstrip("/")
@@ -88,6 +104,7 @@ class ServiceNowClient:
             f"{self.instance_url}/api/now/table/{table}",
             auth=self.auth, headers=self.headers, params=params, timeout=30,
         )
+        _check_awake(resp)
         resp.raise_for_status()
         return resp.json().get("result", [])
 
@@ -96,6 +113,7 @@ class ServiceNowClient:
             f"{self.instance_url}/api/now/table/{table}",
             auth=self.auth, headers=self.headers, json=data, timeout=30,
         )
+        _check_awake(resp)
         if resp.status_code in (200, 201):
             return resp.json()["result"]["sys_id"]
         raise Exception(f"Create {table} failed ({resp.status_code}): {resp.text}")
@@ -105,6 +123,7 @@ class ServiceNowClient:
             f"{self.instance_url}/api/now/table/{table}/{sys_id}",
             auth=self.auth, headers=self.headers, json=data, timeout=30,
         )
+        _check_awake(resp)
         if resp.status_code != 200:
             raise Exception(f"Update {table}/{sys_id} failed ({resp.status_code}): {resp.text}")
         return True
@@ -275,17 +294,32 @@ def resolve_old(snow, keep, dry_run):
         if SIM_NUMBER_MIN <= n <= SIM_NUMBER_MAX:
             sim_open.append(r)
     to_resolve = sim_open[:-keep] if keep > 0 and len(sim_open) > keep else (sim_open if keep == 0 else [])
+    failed = 0
     for r in to_resolve:
         if dry_run:
             print(f"  [dry-run] would resolve {r['number']} ({r.get('company','')})")
             continue
-        snow.update_record("incident", r["sys_id"], {
-            "state": "6",  # Resolved
-            "close_code": "Solved (Permanently)",
-            "close_notes": "Auto-resolved by activity simulator (demo housekeeping).",
-        })
-        print(f"  resolved {r['number']} ({r.get('company','')})")
-    return len(to_resolve)
+        try:
+            snow.update_record("incident", r["sys_id"], {
+                "state": "6",  # Resolved
+                # Must be a value from the instance's incident close_code choice
+                # list. "Solved (Permanently)" no longer exists on current
+                # releases; an invalid value trips the mandatory-Resolution-code
+                # data policy (403).
+                "close_code": "Solution provided",
+                "close_notes": "Auto-resolved by activity simulator (demo housekeeping).",
+            })
+            print(f"  resolved {r['number']} ({r.get('company','')})")
+        except InstanceHibernatingError:
+            raise
+        except Exception as e:
+            # Housekeeping is best-effort: one stubborn record must not abort
+            # the run (that is exactly what kept the nightly job red for weeks).
+            failed += 1
+            print(f"  WARNING: could not resolve {r['number']}: {e}", file=sys.stderr)
+    if failed:
+        print(f"  WARNING: {failed} incident(s) could not be resolved this run.", file=sys.stderr)
+    return len(to_resolve) - failed
 
 
 def main():
@@ -326,14 +360,21 @@ def main():
                   "monitor access (it won't see them). Provide FGA_* env / SSM, or pass --no-grant.")
 
     print(f"Activity simulator → {snow_creds['instance_url']}  (mode: {args.mode})")
-    opened = []
-    for _ in range(max(1, args.count)):
-        account = pick_account(args.account)
-        priority = pick_priority(args.priority)
-        opened.append(open_incident(snow, account, priority, dry, fga, args.agent_user))
+    try:
+        opened = []
+        for _ in range(max(1, args.count)):
+            account = pick_account(args.account)
+            priority = pick_priority(args.priority)
+            opened.append(open_incident(snow, account, priority, dry, fga, args.agent_user))
 
-    if not args.no_resolve:
-        resolve_old(snow, args.resolve_keep, dry)
+        if not args.no_resolve:
+            resolve_old(snow, args.resolve_keep, dry)
+    except InstanceHibernatingError as e:
+        # A sleeping PDI is an expected overnight condition, not a job failure.
+        # Exit 0 so the scheduled run shows a skip-with-warning instead of red;
+        # the ::warning:: line surfaces it in the GitHub Actions summary.
+        print(f"::warning::Skipping run: {e}")
+        sys.exit(0)
 
     print(f"Done. Opened {len(opened)} incident(s): {', '.join(opened)}")
 
