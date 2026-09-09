@@ -377,7 +377,7 @@ customer reads the source. Known items, verified in the packaged code:
 
 | Sharp edge | Where | Why it's this way |
 |---|---|---|
-| ServiceNow PDI hibernates after ~24h idle | the whole demo | Personal Developer Instances sleep; when asleep, the simulator throws JSON errors and the crew reports all-clear. Wake it at developer.servicenow.com before any demo. There is no wake API. |
+| ServiceNow PDI hibernates after ~24h idle | the whole demo | Personal Developer Instances sleep; when asleep, the crew reports all-clear and the simulator skips its run with a workflow warning (it detects the hibernation page and exits cleanly). Wake it at developer.servicenow.com before any demo. There is no wake API. |
 | Backend decodes bearer JWTs without verifying signatures | `mcp-server/src/auth.ts` | It trusts the adapter/Okta in front of it. Fine behind the adapter, wrong if exposed directly. `group-owner-mcp` shows the correct pattern (JWKS verification in-process). |
 | FGA checks fail open on errors | `mcp-server/src/fga.ts` | Deliberate for demo resilience. A real control fails closed. |
 | FGA record filtering only runs on the SSE/stdio path | `mcp-server/src/index.ts` | The JSON-RPC `/mcp` and `/api/tool` paths get the per-tool invoke check but not per-record filtering. Know which path your client uses before promising record-level filtering on it. |
