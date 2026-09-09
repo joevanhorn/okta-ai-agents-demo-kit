@@ -1,0 +1,97 @@
+name: Simulate Monitor Activity
+
+# Generates fresh ServiceNow activity (open P1/P2 incidents on at-risk accounts)
+# that the CrewAI Account Risk Monitor will flag. Each incident is created
+# directly in the backing ServiceNow with an INC-4xxx number (so the MCP read
+# tools return it) and the monitor agent is auto-granted FGA viewer on it.
+#
+# Credentials come from SSM (/bedrock-xaa-demo: servicenow_* + fga_*) via an
+# AWS OIDC role — no GitHub secrets for the backend creds.
+#
+# To use this in your own fork/deployment:
+#   1. Create a GitHub environment (rename `environment:` below to match) with
+#      an AWS_ROLE_ARN secret pointing at an OIDC-assumable role that can read
+#      the SSM parameters simulate_activity.py needs.
+#   2. Make sure the role's trust policy includes THIS repo's OIDC sub claim
+#      (new repos emit a different sub than the repo the role was built for).
+#   3. Adjust the SSM prefix via simulate_activity.py flags if yours differs.
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # every 6 hours
+  workflow_dispatch:
+    inputs:
+      account:
+        description: "Force an account (blank = weighted-random at-risk account)"
+        required: false
+        type: choice
+        default: ""
+        options:
+          - ""
+          - "NorthStar Insurance"
+          - "Acme Corp"
+          - "Pinnacle Financial"
+          - "Meridian Healthcare"
+          - "Apex Manufacturing"
+      priority:
+        description: "Force a priority (blank = mostly P1/P2)"
+        required: false
+        type: choice
+        default: ""
+        options: ["", "P1", "P2", "P3"]
+      count:
+        description: "How many incidents to open"
+        required: false
+        default: "1"
+      resolve_keep:
+        description: "Resolve simulated open incidents beyond the newest N"
+        required: false
+        default: "4"
+      mode:
+        description: "run (write) or dry-run (preview)"
+        required: false
+        type: choice
+        default: "run"
+        options: ["run", "dry-run"]
+
+permissions:
+  contents: read
+  id-token: write   # AWS OIDC
+
+jobs:
+  simulate:
+    name: Simulate activity
+    runs-on: ubuntu-latest
+    environment: taskvantage-prod
+    env:
+      MODE: ${{ github.event.inputs.mode || 'run' }}
+      COUNT: ${{ github.event.inputs.count || '1' }}
+      RESOLVE_KEEP: ${{ github.event.inputs.resolve_keep || '4' }}
+      ACCOUNT: ${{ github.event.inputs.account || '' }}
+      PRIORITY: ${{ github.event.inputs.priority || '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests boto3
+
+      - name: Run activity simulator
+        working-directory: crewai-demo
+        run: |
+          ARGS=(--use-ssm --aws-region us-east-2 --mode "$MODE" --count "$COUNT" --resolve-keep "$RESOLVE_KEEP")
+          [ -n "$ACCOUNT" ] && ARGS+=(--account "$ACCOUNT")
+          [ -n "$PRIORITY" ] && ARGS+=(--priority "$PRIORITY")
+          echo "simulate_activity.py ${ARGS[*]}"
+          python simulate_activity.py "${ARGS[@]}"

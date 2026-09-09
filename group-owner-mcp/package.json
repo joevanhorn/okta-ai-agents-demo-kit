@@ -1,0 +1,25 @@
+{
+  "name": "group-owner-mcp",
+  "version": "1.0.0",
+  "description": "Delegated group-owner MCP server \u2014 a user manages ONLY the Okta groups they own, enforced by verified identity + a fail-closed ownership gate (optionally externalized to Okta FGA). Demo component for Okta for AI Agents.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "OKTA_DOMAIN=test.okta.com OKTA_CLIENT_ID=test-client OKTA_PRIVATE_KEY_PATH=./dummy.pem tsx --test test/*.test.ts",
+    "sync-fga": "tsx src/fga/sync-ownership.ts",
+    "mock": "tsx scripts/mock-server.ts"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "jose": "^5.9.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

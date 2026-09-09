@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+*.pem
+
+# local-only demo launcher (may embed API keys) — never commit
+run-demo.py
+*.local.py
+.demo-secrets*

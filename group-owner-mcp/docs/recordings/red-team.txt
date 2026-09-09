@@ -1,0 +1,26 @@
+[1G[0K▶ Goal #2 — denial holds against a non-owned group (Layer 2, FGA off)
+  [32m✔ ATTACK: plainly read a group she does not own → DENIED [90m(1.910647ms)[39m[39m
+  [32m✔ ATTACK: add herself to a group she does not own → DENIED, no write [90m(0.76573ms)[39m[39m
+  [32m✔ ATTACK: remove someone from a group she does not own → DENIED, no write [90m(0.418049ms)[39m[39m
+  [32m✔ ATTACK: spoof identity via a forged `subject` argument → IGNORED, DENIED [90m(0.378618ms)[39m[39m
+  [32m✔ ATTACK: injection-style groupId string → treated as a plain id, DENIED [90m(0.394456ms)[39m[39m
+  [32m✔ ATTACK: empty / anonymous subject (no valid token) → DENIED [90m(0.322489ms)[39m[39m
+  [32m✔ ATTACK: "check" is not a read-only loophole on a non-owned group → DENIED [90m(0.4816ms)[39m[39m
+[32m✔ Goal #2 — denial holds against a non-owned group (Layer 2, FGA off) [90m(5.80905ms)[39m[39m
+▶ Goal #1 — the owner can do her job
+  [32m✔ list_my_owned_groups returns ONLY Alice’s group [90m(1.820024ms)[39m[39m
+  [32m✔ read members of her OWN group → allowed [90m(0.43912ms)[39m[39m
+  [32m✔ add a member to her OWN group → allowed, write DID fire [90m(0.406416ms)[39m[39m
+[32m✔ Goal #1 — the owner can do her job [90m(2.871212ms)[39m[39m
+▶ Structural — the tools cannot modify ownership at all
+  [32m✔ the Okta client exposes NO owner-mutation method [90m(0.252047ms)[39m[39m
+[32m✔ Structural — the tools cannot modify ownership at all [90m(0.320439ms)[39m[39m
+[34mℹ tests 11[39m
+[34mℹ suites 3[39m
+[34mℹ pass 11[39m
+[34mℹ fail 0[39m
+[34mℹ cancelled 0[39m
+[34mℹ skipped 0[39m
+[34mℹ todo 0[39m
+[34mℹ duration_ms 332.333765[39m
+[1G[0K⠙[1G[0K

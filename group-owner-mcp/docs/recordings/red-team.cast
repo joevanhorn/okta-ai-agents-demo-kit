@@ -1,0 +1,13 @@
+{"version": 2, "width": 90, "height": 40, "timestamp": 1782874295, "idle_time_limit": 2.0, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}}
+[0.27021, "o", "\u001b[1G"]
+[0.271817, "o", "\u001b[0K"]
+[0.720165, "o", "▶ Goal #2 — denial holds against a non-owned group (Layer 2, FGA off)\r\n  \u001b[32m✔ ATTACK: plainly read a group she does not own → DENIED \u001b[90m(1.910647ms)\u001b[39m\u001b[39m\r\n"]
+[0.720956, "o", "  \u001b[32m✔ ATTACK: add herself to a group she does not own → DENIED, no write \u001b[90m(0.76573ms)\u001b[39m\u001b[39m\r\n  \u001b[32m✔ ATTACK: remove someone from a group she does not own → DENIED, no write \u001b[90m(0.418049ms)\u001b[39m\u001b[39m\r\n  \u001b[32m✔ ATTACK: spoof identity via a forged `subject` argument → IGNORED, DENIED \u001b[90m(0.378618ms)\u001b[39m\u001b[39m\r\n"]
+[0.721165, "o", "  \u001b[32m✔ ATTACK: injection-style groupId string → treated as a plain id, DENIED \u001b[90m(0.394456ms)\u001b[39m\u001b[39m\r\n  \u001b[32m✔ ATTACK: empty / anonymous subject (no valid token) → DENIED \u001b[90m(0.322489ms)\u001b[39m\u001b[39m\r\n"]
+[0.721829, "o", "  \u001b[32m✔ ATTACK: \"check\" is not a read-only loophole on a non-owned group → DENIED \u001b[90m(0.4816ms)\u001b[39m\u001b[39m\r\n\u001b[32m✔ Goal #2 — denial holds against a non-owned group (Layer 2, FGA off) \u001b[90m(5.80905ms)\u001b[39m\u001b[39m\r\n"]
+[0.722589, "o", "▶ Goal #1 — the owner can do her job\r\n  \u001b[32m✔ list_my_owned_groups returns ONLY Alice’s group \u001b[90m(1.820024ms)\u001b[39m\u001b[39m\r\n"]
+[0.723208, "o", "  \u001b[32m✔ read members of her OWN group → allowed \u001b[90m(0.43912ms)\u001b[39m\u001b[39m\r\n  \u001b[32m✔ add a member to her OWN group → allowed, write DID fire \u001b[90m(0.406416ms)\u001b[39m\u001b[39m\r\n\u001b[32m✔ Goal #1 — the owner can do her job \u001b[90m(2.871212ms)\u001b[39m\u001b[39m\r\n▶ Structural — the tools cannot modify ownership at all\r\n  \u001b[32m✔ the Okta client exposes NO owner-mutation method \u001b[90m(0.252047ms)\u001b[39m\u001b[39m\r\n"]
+[0.723811, "o", "\u001b[32m✔ Structural — the tools cannot modify ownership at all \u001b[90m(0.320439ms)\u001b[39m\u001b[39m\r\n"]
+[0.742021, "o", "\u001b[34mℹ tests 11\u001b[39m\r\n\u001b[34mℹ suites 3\u001b[39m\r\n\u001b[34mℹ pass 11\u001b[39m\r\n\u001b[34mℹ fail 0\u001b[39m\r\n\u001b[34mℹ cancelled 0\u001b[39m\r\n\u001b[34mℹ skipped 0\u001b[39m\r\n\u001b[34mℹ todo 0\u001b[39m\r\n\u001b[34mℹ duration_ms 332.333765\u001b[39m\r\n"]
+[0.752421, "o", "\u001b[1G\u001b[0K⠙"]
+[0.754059, "o", "\u001b[1G\u001b[0K"]
